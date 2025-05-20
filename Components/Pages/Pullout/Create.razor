@@ -7,19 +7,25 @@
 
 <PageTitle>Create Page</PageTitle>
 
-<form id="Sale-add-form" class="form-horizontal popup-form" style="padding:15px;"> 
+@* <form id="Sale-add-form" class="form-horizontal popup-form" style="padding:15px;">  *@
 	<div class="modal-header">
 		<h4 class="modal-title" id="myModalLabel">Create New Sale</h4>
 	</div>
+	@if (!string.IsNullOrEmpty(responseMessage))
+	{
+		<div class="alert alert-success" role="alert">
+			@responseMessage
+		</div>
+	}
 	<div class="modal-body" style="padding:15px;">
 
 		<div class="col-md-12 col-sm-12 col-xs-12 form-group">
-			<label></label>
+			<label>Pullout Name</label>
 			<input @bind="PulloutVM.PulloutName" class="form-control" />
 			<span></span>
 		</div>
 		<div class="col-md-12 col-sm-12 col-xs-12 form-group">
-			<label></label>
+			<label>Pullout Description</label>
 			<input @bind="PulloutVM.PulloutDescription" class="form-control" />
 			<span></span>
 		</div>
@@ -30,12 +36,7 @@
 			<a href="/pullout/index" class="btn btn-primary btn-custom" data-bs-dismiss="modal" style="margin-top:10px"><i class="fa fa-close"></i> Cancel</a>
 		</div>
 	</div>
-</form> 
-
-@if (!string.IsNullOrEmpty(responseMessage))
-{
-	<p>@responseMessage</p>
-}
+@* </form>  *@
 
 @code {
 
@@ -59,6 +60,9 @@
 		else
 		{
 			responseMessage = "Request successful!";
+			PulloutVM = new();
+
 		}
+		StateHasChanged();
 	}
 }

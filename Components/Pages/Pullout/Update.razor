@@ -7,13 +7,13 @@
 
 <PageTitle>Update Page</PageTitle>
 
-<form id="Sale-update-form" class="form-horizontal popup-form" style="padding:15px;">
+@* <form id="Sale-update-form" class="form-horizontal popup-form" style="padding:15px;"> *@
 	<div class="modal-header">
 		<h4 class="modal-title" id="myModalLabel">Update Pullout Details</h4>
 	</div
 	@if (!string.IsNullOrEmpty(responseMessage))
 	{
-		<div class="alert alert-primary" role="alert">
+		<div class="alert alert-success" role="alert">
 			@responseMessage
 		</div>
 	}
@@ -38,7 +38,7 @@
 			<a href="/pullout/index" class="btn btn-primary btn-custom" data-bs-dismiss="modal" style="margin-top:10px"><i class="fa fa-close"></i> Cancel</a>
 		</div>
 	</div>
-</form>
+@* </form> *@
 
 
 @code {
