@@ -1,0 +1,49 @@
+﻿@page "/pullout/details/{Id:int}"
+@using BlazorApp1.ViewModels
+@using codegen.Helpers
+
+<PageTitle>Details Page</PageTitle>
+
+ <div class="col-md-12 col-sm-12 col-xs-12" style="padding:15px;">
+     <dl class="dl-horizontal">
+	    <dt>Pullout Id</dt>
+	    <dd>@PulloutVM.PulloutId</dd>
+	    
+	    <dt>Pullout Name</dt>
+	    <dd>@PulloutVM.PulloutName</dd>
+	    
+	    <dt>Pullout Description</dt>
+	    <dd>@PulloutVM.PulloutDescription</dd>
+	    
+	    <dt>Pullout Description</dt>
+	    <dd>@PulloutVM.PulloutDate</dd>
+     </dl>
+     </div>
+    <a href="/pullout/index" class="btn btn-primary btn-custom" data-bs-dismiss="modal"><i class="fa fa-close"></i> Close</a>
+
+
+@code {
+	[Parameter]
+	public int Id { get; set; }
+	private PulloutVM PulloutVM = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		// Simulate asynchronous loading to demonstrate streaming rendering
+		await Task.Delay(500);
+
+		var restService = new RestService<PulloutVM>();
+		//var json = JsonConvert.SerializeObject(search);
+		var result = new ServiceModel<PulloutVM>();
+		result = await restService.Get($"https://localhost:7062/api/Pullouts/GetPulloutById/{Id}");
+		if (!result.IsSuccess)
+		{
+			PulloutVM = null;
+		}
+		else
+		{
+			PulloutVM = result.Data;
+		}
+
+	}
+}

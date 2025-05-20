@@ -1,0 +1,64 @@
+﻿@page "/pullout/create"
+@using BlazorApp1.ViewModels
+@using Newtonsoft.Json
+@using codegen.Helpers
+
+@rendermode InteractiveServer
+
+<PageTitle>Create Page</PageTitle>
+
+<form id="Sale-add-form" class="form-horizontal popup-form" style="padding:15px;"> 
+	<div class="modal-header">
+		<h4 class="modal-title" id="myModalLabel">Create New Sale</h4>
+	</div>
+	<div class="modal-body" style="padding:15px;">
+
+		<div class="col-md-12 col-sm-12 col-xs-12 form-group">
+			<label></label>
+			<input @bind="PulloutVM.PulloutName" class="form-control" />
+			<span></span>
+		</div>
+		<div class="col-md-12 col-sm-12 col-xs-12 form-group">
+			<label></label>
+			<input @bind="PulloutVM.PulloutDescription" class="form-control" />
+			<span></span>
+		</div>
+	</div>
+	<div class="col-md-12 col-sm-12 col-xs-12">
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-custom" @onclick="SendRequest" style="margin-top:10px"><i class="fa fa-save"></i> Save</button>
+			<a href="/pullout/index" class="btn btn-primary btn-custom" data-bs-dismiss="modal" style="margin-top:10px"><i class="fa fa-close"></i> Cancel</a>
+		</div>
+	</div>
+</form> 
+
+@if (!string.IsNullOrEmpty(responseMessage))
+{
+	<p>@responseMessage</p>
+}
+
+@code {
+
+	private PulloutVM PulloutVM = new();
+	private string responseMessage;
+
+	private async Task SendRequest()
+	{
+		var restService = new RestService<List<PulloutVM>>();
+
+		var json = JsonConvert.SerializeObject(PulloutVM);
+
+		var result = new ServiceModel<List<PulloutVM>>();
+
+		result = await restService.Post("https://localhost:7062/api/Pullouts/add", json);
+
+		if (!result.IsSuccess)
+		{
+			responseMessage = result.Error;
+		}
+		else
+		{
+			responseMessage = "Request successful!";
+		}
+	}
+}

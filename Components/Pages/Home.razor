@@ -1,0 +1,19 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+<h3>Modal Demo</h3>
+
+<button class="btn btn-primary" @onclick="OpenModal">Open Modal</button>
+
+<Modal @ref="modalRef" Title="My Modal Title">
+    <p>This is modal content.</p>
+</Modal>
+
+@code {
+    private Modal modalRef;
+
+    private void OpenModal()
+    {
+        modalRef.Show();
+    }
+}

@@ -1,0 +1,254 @@
+﻿@page "/pullout/index"
+@using BlazorApp1.ViewModels
+@using Newtonsoft.Json
+@using codegen.Helpers
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<PageTitle>Index Page</PageTitle>
+
+<h1>Pullout</h1>
+
+<div class="row">
+    <!--BUTTON TOP-->
+    <div class="col-md-12 col-sm-12 col-xs-12">
+
+        <button class="btn btn-primary" @onclick="OpenModal">Create Modal</button>
+        <a href="/Pullout/Create" class="btn btn-primary btn-md btn-custom float-left popup"><i class="fa fa-plus"></i> Add New Pullout</a>
+        <button class="btn btn-primary btn-custom" id="js-export-Sale"><i class="fa fa-download"></i> Export Record Report</button>
+    </div>
+
+    <div class="col-md-12 col-sm-12 col-xs-12 divider-dashed"></div>
+
+    <!--SEARCH AREA-->
+    <form class="form-horizontal" id="search-Sale-form">
+        <div class="col-md-12 col-sm-12 col-xs-12 form-group">
+            <label>Search by:</label>
+            <input class="form-control" id="js-Keyword-search" @bind="searchInfo.Keyword" />
+        </div>
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <label>Page Size:</label>
+            <select class="form-control" id="js-page-size" @bind="PageSize">
+                <option disabled>Max rows</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+        <div class="col-md-12 col-sm-12 col-xs-12 form-group" style="margin-top:10px;">
+            <button type="button" class="btn btn-primary btn-custom" @onclick="()=>SearchPullout()"><i class="fa fa-search"></i> Search</button>
+        </div>
+    </form>
+</div>
+
+<div class="row">
+
+    <!--BULK BUTTON-->
+    <div class="col-md-12 col-sm-12 col-xs-12" style="display:none" id="js-delete-container">
+        <button class="btn btn-primary btn-md btn-custom fa fa-trash" id="js-delete-bulk">Delete</button>
+    </div>
+
+
+    @if (Pullouts == null)
+    {
+        <br />
+        <p>Please wait..</p>
+    }
+    else
+    {
+        <!--DATA TABLE-->
+        <div class="col-md-12 col-sm-12 col-xs-12 js-Sale-list-container">
+            <table class="table table-hover bulk_action" id="js-table-Sale" style="margin-top:10px;">
+                <thead>
+                    <tr>
+                        <th>Pullout Id</th>
+                        <th>Pullout Name</th>
+                        <th>Pullout Description</th>
+                        <th>Pullout Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pullout in Pullouts.QueriedList)
+                    {
+                        <tr>
+                            <td>@pullout.PulloutId</td>
+                            <td>@pullout.PulloutName</td>
+                            <td>@pullout.PulloutDescription</td>
+                            <td>@pullout.PulloutDate</td>
+                            <td>
+                                <a href="pullout/update/@pullout.PulloutId">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a href="pullout/details/@pullout.PulloutId">
+                                    <i class="fa fa-info-circle"></i>
+                                </a>
+                                <a @onclick="()=>DeletePullout(pullout.PulloutId)">
+                                    <i class="fa fa-trash-o"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <!--PAGINATION AND SUMMARY-->
+        <div class="col-md-12 col-sm-12 col-xs-12 js-pagination-Sale" style="margin-top:-27px;">
+
+            <div id="js-page-history" style="float:left;margin-top:25px;color:#cc503b;">
+                <!--PAGINATION HISTORY-->
+                @Pullouts?.PageSummary
+            </div>
+
+            <div style="float:right;margin-top:20px;">
+                <ul class="pagination pagination-md" id="js-ul-pagination">
+                    <!--LOAD PAGINATION-->
+                    <li id="js-prev-btn"><a class="page-link" style="cursor:pointer;">&laquo;</a></li>
+
+                    @for (var i = 0; i < Pullouts?.PageIndices?.Count(); i++)
+                    {
+                        <li id="js-li-count-@Pullouts?.PageIndices?.ToArray()[i]" class="check page-item li-children-ref" data-id="@Pullouts?.PageIndices?.ToArray()[i]">
+                            <a style="cursor:pointer;" class="page-link" id="click-User-pagination" data-id="@Pullouts?.PageIndices?.ToArray()[i]">
+                                @Pullouts?.PageIndices?.ToArray()[i]
+                            </a>
+                        </li>
+                    }
+                    <li id="js-next-btn"><a class="page-link" style="cursor:pointer;">&raquo;</a></li>
+                </ul>
+            </div>
+        </div>
+    }
+
+    <PulloutModal @ref="modalRef" Title="My Modal Title">
+        <p>This is modal content.</p>
+    </PulloutModal>
+</div>
+
+
+@code {
+    private PulloutSearch searchInfo = new();
+    private Pagination<PulloutVM> Pullouts;
+    private PulloutVM PulloutVM = new();
+    private string responseMessage;
+    private int PageSize = 10;
+    private int CurrentPage = 1;
+
+    private PulloutModal modalRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate asynchronous loading to demonstrate streaming rendering
+        await Task.Delay(500);
+
+        var search = new PulloutSearch();
+        search.Keyword = searchInfo?.Keyword;
+        var pullout = await LoadPullout(CurrentPage, PageSize, search);
+        Pullouts = pullout;
+    }
+
+    private async Task<Pagination<PulloutVM>> LoadPullout(int currpage, int pagesize, PulloutSearch search)
+    {
+        var restService = new RestService<Pagination<PulloutVM>>();
+        //var json = JsonConvert.SerializeObject(search);
+        var result = new ServiceModel<Pagination<PulloutVM>>();
+        result = await restService.Get($"https://localhost:7062/api/Pullouts/List/Page{currpage}/PageSize{pagesize}?Keyword={search?.Keyword}");
+        if (!result.IsSuccess)
+        {
+            return Pullouts = null;
+        }
+        else
+        {
+            return Pullouts = result.Data;
+        }
+    }
+
+    private void OpenModal()
+    {
+        modalRef.Show();
+    }
+
+    private async Task SearchPullout()
+    {
+        var search = new PulloutSearch();
+        search.Keyword = searchInfo?.Keyword;
+        var pullout = await LoadPullout(CurrentPage, PageSize, search);
+        Pullouts = pullout;
+
+        StateHasChanged();
+    }
+
+    private async Task CreatePullout()
+    {
+        var restService = new RestService<List<PulloutVM>>();
+        var result = new ServiceModel<List<PulloutVM>>();
+
+        var json = JsonConvert.SerializeObject(PulloutVM);
+
+        result = await restService.Post("https://localhost:7062/api/Pullouts/add", json);
+
+        if (!result.IsSuccess)
+        {
+            responseMessage = result.Error;
+        }
+        else
+        {
+            var search = new PulloutSearch();
+            search.Keyword = searchInfo?.Keyword;
+            var pullout = await LoadPullout(CurrentPage, PageSize, search);
+            Pullouts = pullout;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task UpdatePullout()
+    {
+        var restService = new RestService<List<PulloutVM>>();
+
+        var json = JsonConvert.SerializeObject(PulloutVM);
+
+        var result = new ServiceModel<List<PulloutVM>>();
+
+        result = await restService.Post("https://localhost:7062/api/Pullouts/update", json);
+
+        if (!result.IsSuccess)
+        {
+            responseMessage = result.Error;
+        }
+        else
+        {
+            var search = new PulloutSearch();
+            search.Keyword = searchInfo?.Keyword;
+            var pullout = await LoadPullout(CurrentPage, PageSize, search);
+            Pullouts = pullout;
+        }
+
+        StateHasChanged();
+    }
+
+    public async Task DeletePullout(int id)
+    {
+        var restService = new RestService<List<PulloutVM>>();
+
+        var result = new ServiceModel<List<PulloutVM>>();
+
+        result = await restService.Delete($"https://localhost:7062/api/Pullouts/{id}/delete");
+
+        if (!result.IsSuccess)
+        {
+            responseMessage = result.Error;
+        }
+        else
+        {
+            var search = new PulloutSearch();
+            search.Keyword = searchInfo?.Keyword;
+            var pullout = await LoadPullout(CurrentPage, PageSize, search);
+            Pullouts = pullout;
+        }
+
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,91 @@
+﻿@page "/pullout/update/{Id:int}"
+@using BlazorApp1.ViewModels
+@using Newtonsoft.Json
+@using codegen.Helpers
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager;
+
+<PageTitle>Update Page</PageTitle>
+
+<form id="Sale-update-form" class="form-horizontal popup-form" style="padding:15px;">
+	<div class="modal-header">
+		<h4 class="modal-title" id="myModalLabel">Update Pullout Details</h4>
+	</div
+	@if (!string.IsNullOrEmpty(responseMessage))
+	{
+		<div class="alert alert-primary" role="alert">
+			@responseMessage
+		</div>
+	}
+	
+	<div class="modal-body" style="padding:15px;">
+		<input type="hidden" @bind="PulloutVM.PulloutId" />
+
+		<div class="col-md-12 col-sm-12 col-xs-12 form-group">
+			<label>Pullout Name</label>
+			<input @bind="PulloutVM.PulloutName" class="form-control" />
+			<span></span>
+		</div>
+		<div class="col-md-12 col-sm-12 col-xs-12 form-group">
+			<label>Pullout Description</label>
+			<input @bind="PulloutVM.PulloutDescription" class="form-control" />
+			<span></span>
+		</div>
+	</div>
+	<div class="col-md-12 col-sm-12 col-xs-12">
+		<div class="modal-footer">
+			<button type="submit" class="btn btn-primary btn-custom" @onclick="SendRequest" style="margin-top:10px"><i class="fa fa-save"></i> Save</button>
+			<a href="/pullout/index" class="btn btn-primary btn-custom" data-bs-dismiss="modal" style="margin-top:10px"><i class="fa fa-close"></i> Cancel</a>
+		</div>
+	</div>
+</form>
+
+
+@code {
+
+	[Parameter]
+	public int Id { get; set; }
+	private PulloutVM PulloutVM = new();
+	private string responseMessage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		// Simulate asynchronous loading to demonstrate streaming rendering
+		await Task.Delay(500);
+
+		var restService = new RestService<PulloutVM>();
+		//var json = JsonConvert.SerializeObject(search);
+		var result = new ServiceModel<PulloutVM>();
+		result = await restService.Get($"https://localhost:7062/api/Pullouts/GetPulloutById/{Id}");
+		if (!result.IsSuccess)
+		{
+			PulloutVM = null;
+		}
+		else
+		{
+			PulloutVM = result.Data;
+		}
+	}
+
+	private async Task SendRequest()
+	{
+		var restService = new RestService<List<PulloutVM>>();
+
+		var json = JsonConvert.SerializeObject(PulloutVM);
+
+		var result = new ServiceModel<List<PulloutVM>>();
+
+		result = await restService.Post("https://localhost:7062/api/Pullouts/update", json);
+
+		if (!result.IsSuccess)
+		{
+			responseMessage = result.Error;
+		}
+		else
+		{
+			responseMessage = "Request successfully saved!";
+		}
+
+		StateHasChanged();
+	}
+}
